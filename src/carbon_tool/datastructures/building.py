@@ -5,6 +5,11 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 import carbon_tool
+try:
+    import rhinoscriptsyntax as rs
+except:
+    pass
+
 
 class Building(object):
 
@@ -30,6 +35,14 @@ class Building(object):
         self.out_path                           = None
         self.run_model                          = False
         self.city                               = None
+        self.building_type                      = None
+        self.num_floors_above                   = None
+        self.composite_slab                     = None
+        self.columns                            = None
+        self.beams_x                            = None
+        self.beams_y                            = None
+        self.core                               = None
+        self.zone_surfaces                      = {}
 
     @classmethod
     def from_gh(self, 
@@ -51,7 +64,14 @@ class Building(object):
                 interior_finish,
                 city,
                 out_path,
-                run_model):
+                run_model,
+                building_type,
+                num_floors_above,
+                composite_slab,
+                columns,
+                beams_x,
+                beams_y,
+                core):
 
         b = Building()
         b.znames = znames
@@ -59,13 +79,16 @@ class Building(object):
         for i, zname in enumerate(znames):
             b.zone_breps[zname] = breps[i]
 
-        weather_dict = {'Seattle', carbon_tool.SEATTLE,
-                        'Los Angeles', carbon_tool.LOS_ANGELES,
-                        'Milwaukee', carbon_tool.MILWAUKEE,
-                        'San Antonio', carbon_tool.SAN_ANTONIO,
-                        'New York', carbon_tool.NEW_YORK,
-                        'Atlanta', carbon_tool.ATLANTA,
+        weather_dict = {'Seattle': carbon_tool.SEATTLE,
+                        'Los Angeles': carbon_tool.LOS_ANGELES,
+                        'Milwaukee': carbon_tool.MILWAUKEE,
+                        'San Antonio': carbon_tool.SAN_ANTONIO,
+                        'New York': carbon_tool.NEW_YORK,
+                        'Atlanta': carbon_tool.ATLANTA,
                         }
+
+        if not out_path:
+            out_path = carbon_tool.TEMP
 
         b.is_roof_adiabatic             = is_roof_adiabatic        
         b.is_floor_adiabatic            = is_floor_adiabatic            
@@ -82,11 +105,53 @@ class Building(object):
         b.exterior_wall_framing         = exterior_wall_framing                
         b.interior_finish               = interior_finish                
         b.weather_file                  = weather_dict[city]                
+        b.city                          = city
         b.out_path                      = out_path                
         b.run_model                     = run_model                
-        
+        b.building_type                 = building_type                       
+        b.num_floors_above              = num_floors_above                    
+        b.composite_slab                = composite_slab                          
+        b.columns                       = columns                             
+        b.beams_x                       = beams_x                                 
+        b.beams_y                       = beams_y                                 
+        b.core                          = core                                
+
         return b
 
+    def compute_surfaces(self):
+        all_pts = []
+        for zk in self.zone_breps:
+        # for zk in ['zone_1']:
+            brep = self.zone_breps[zk]
+            srfs = rs.ExplodePolysurfaces(brep, delete_input=False)
+            self.zone_surfaces[zk] = {'north': [],
+                                      'east': [],
+                                      'south': [],
+                                      'west': [],
+                                      'walls': [],
+                                      'roof': None,
+                                      'floor': None}
+            for srf in srfs:
+                n = rs.VectorUnitize(rs.SurfaceNormal(srf, (0, 0)))
+                # angle = rs.VectorAngle(n, [0, 1, 0])
+                angle = rs.Angle2([[0,0,0], [0,1,0]], [[0,0,0], n])[0]
+                if n[2] == 0:
+                    if angle < 135 and angle > 45 and n[0] > 0:
+                        self.zone_surfaces[zk]['east'].append(srf)
+                    elif angle < 225 and angle > 135:
+                        self.zone_surfaces[zk]['south'].append(srf)
+                    elif angle < 135 and angle > 45 and n[0] < 0:
+                        self.zone_surfaces[zk]['west'].append(srf)
+                    else:
+                        self.zone_surfaces[zk]['north'].append(srf)
+                        
+                    self.zone_surfaces[zk]['walls'].append(srf)
+                elif n[2]< 0:
+                    self.zone_surfaces[zk]['floor'] = srf
+                else:
+                    self.zone_surfaces[zk]['roof'] = srf
+
+        return all_pts
 
 if __name__ == '__main__':
     for i in range(50): print('')
