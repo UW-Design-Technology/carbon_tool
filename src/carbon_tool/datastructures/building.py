@@ -4,6 +4,7 @@ __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
+import carbon_tool
 
 class Building(object):
 
@@ -28,6 +29,7 @@ class Building(object):
         self.weather_file                       = None
         self.out_path                           = None
         self.run_model                          = False
+        self.city                               = None
 
     @classmethod
     def from_gh(self, 
@@ -47,7 +49,7 @@ class Building(object):
                 interior_insulation_material,
                 exterior_wall_framing,
                 interior_finish,
-                weather_file,
+                city,
                 out_path,
                 run_model):
 
@@ -56,6 +58,14 @@ class Building(object):
 
         for i, zname in enumerate(znames):
             b.zone_breps[zname] = breps[i]
+
+        weather_dict = {'Seattle', carbon_tool.SEATTLE,
+                        'Los Angeles', carbon_tool.LOS_ANGELES,
+                        'Milwaukee', carbon_tool.MILWAUKEE,
+                        'San Antonio', carbon_tool.SAN_ANTONIO,
+                        'New York', carbon_tool.NEW_YORK,
+                        'Atlanta', carbon_tool.ATLANTA,
+                        }
 
         b.is_roof_adiabatic             = is_roof_adiabatic        
         b.is_floor_adiabatic            = is_floor_adiabatic            
@@ -71,7 +81,7 @@ class Building(object):
         b.interior_insulation_material  = interior_insulation_material                    
         b.exterior_wall_framing         = exterior_wall_framing                
         b.interior_finish               = interior_finish                
-        b.weather_file                  = weather_file                
+        b.weather_file                  = weather_dict[city]                
         b.out_path                      = out_path                
         b.run_model                     = run_model                
         
