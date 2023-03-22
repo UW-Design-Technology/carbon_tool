@@ -5,3 +5,5 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 from .make_structure import *
+from .geometry import *
+from .material_reader import *

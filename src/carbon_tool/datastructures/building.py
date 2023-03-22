@@ -5,6 +5,11 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 import carbon_tool
+
+from carbon_tool.datastructures import structure
+reload(structure)
+from carbon_tool.datastructures.structure import Structure
+
 try:
     import rhinoscriptsyntax as rs
 except:
@@ -41,8 +46,9 @@ class Building(object):
         self.columns                            = None
         self.beams_x                            = None
         self.beams_y                            = None
-        self.core                               = None
+        self.cores                              = None
         self.zone_surfaces                      = {}
+        self.structure                          = None
 
     @classmethod
     def from_gh(self, 
@@ -71,7 +77,7 @@ class Building(object):
                 columns,
                 beams_x,
                 beams_y,
-                core):
+                cores):
 
         b = Building()
         b.znames = znames
@@ -114,14 +120,16 @@ class Building(object):
         b.columns                       = columns                             
         b.beams_x                       = beams_x                                 
         b.beams_y                       = beams_y                                 
-        b.core                          = core                                
+        b.cores                         = cores                                
 
+        b.compute_surfaces()
+
+        b.structure = Structure.from_geometry(b)
         return b
 
     def compute_surfaces(self):
-        all_pts = []
+
         for zk in self.zone_breps:
-        # for zk in ['zone_1']:
             brep = self.zone_breps[zk]
             srfs = rs.ExplodePolysurfaces(brep, delete_input=False)
             self.zone_surfaces[zk] = {'north': [],
@@ -151,7 +159,15 @@ class Building(object):
                 else:
                     self.zone_surfaces[zk]['roof'] = srf
 
-        return all_pts
+    @property
+    def floor_area(self):
+        fa = 0
+        for zk in self.zone_surfaces:
+            fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
+        return fa
+
+    def compute_structure_embodied(self):
+        self.structure.compute_embodied()
 
 if __name__ == '__main__':
     for i in range(50): print('')
