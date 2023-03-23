@@ -9,7 +9,7 @@ import os
 import carbon_tool
 
 def read_materials(material_name):
-    filepath = os.path.join(carbon_tool.DATA, 'materials.csv')
+    filepath = os.path.join(carbon_tool.DATA, 'materials', 'materials.csv')
     fh = open(filepath, 'r')
     lines = fh.readlines()
     fh.close()

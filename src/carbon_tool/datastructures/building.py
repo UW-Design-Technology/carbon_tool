@@ -10,6 +10,11 @@ from carbon_tool.datastructures import structure
 reload(structure)
 from carbon_tool.datastructures.structure import Structure
 
+from carbon_tool.datastructures import envelope
+reload(envelope)
+from carbon_tool.datastructures.envelope import Envelope
+
+
 try:
     import rhinoscriptsyntax as rs
 except:
@@ -49,9 +54,12 @@ class Building(object):
         self.cores                              = None
         self.zone_surfaces                      = {}
         self.structure                          = None
+        self.envelope                           = None
+        self.glazing_type                       = None
+        self.height                             = None
 
     @classmethod
-    def from_gh(self, 
+    def from_gh(cls, 
                 breps,
                 znames,
                 is_roof_adiabatic,
@@ -59,7 +67,7 @@ class Building(object):
                 wwrs,
                 shades,
                 automated_shades,
-                glazing_u,
+                glazing_type,
                 shgc,
                 custom_shades,
                 cladding,
@@ -79,7 +87,7 @@ class Building(object):
                 beams_y,
                 cores):
 
-        b = Building()
+        b = cls()
         b.znames = znames
 
         for i, zname in enumerate(znames):
@@ -93,6 +101,9 @@ class Building(object):
                         'Atlanta': carbon_tool.ATLANTA,
                         }
 
+        glazing_dict = {'double': .35, 'triple': .45}  #### This must be chanced to good numbers
+
+
         if not out_path:
             out_path = carbon_tool.TEMP
 
@@ -101,7 +112,7 @@ class Building(object):
         b.wwrs                          = wwrs
         b.shades                        = shades            
         b.automated_shades              = automated_shades              
-        b.glazing_u                     = glazing_u                
+        b.glazing_u                     = glazing_type                
         b.shgc                          = shgc                
         b.custom_shades                 = custom_shades                
         b.cladding                      = cladding                
@@ -121,10 +132,13 @@ class Building(object):
         b.beams_x                       = beams_x                                 
         b.beams_y                       = beams_y                                 
         b.cores                         = cores                                
+        b.glazing_u                     = glazing_dict[glazing_type]
 
         b.compute_surfaces()
+        b.compute_height()
 
         b.structure = Structure.from_geometry(b)
+        b.envelope = Envelope.from_geometry(b)
         return b
 
     def compute_surfaces(self):
@@ -159,6 +173,12 @@ class Building(object):
                 else:
                     self.zone_surfaces[zk]['roof'] = srf
 
+    def compute_height(self):
+        zk = list(self.zone_surfaces.keys())[0]
+        roof = rs.SurfacePoints(self.zone_surfaces[zk]['roof'])
+        floor = rs.SurfacePoints(self.zone_surfaces[zk]['floor'])
+        self.height = roof[0][2] - floor[0][2]
+
     @property
     def floor_area(self):
         fa = 0
@@ -169,5 +189,11 @@ class Building(object):
     def compute_structure_embodied(self):
         self.structure.compute_embodied()
 
+    def compute_envelope_embodied(self):
+        self.envelope.compute_embodied()
+
 if __name__ == '__main__':
     for i in range(50): print('')
+    #TODO: compute adiabatic WALLS automatically and exclude from env embodied
+    #TODO: Glazing U values are hard coded and non-sensical
+    #TODO: Shading embodied is missing, needs to include automated shading too
