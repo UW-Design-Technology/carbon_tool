@@ -14,6 +14,7 @@ from carbon_tool.datastructures import envelope
 reload(envelope)
 from carbon_tool.datastructures.envelope import Envelope
 
+from carbon_tool.functions import geometric_key
 
 try:
     import rhinoscriptsyntax as rs
@@ -112,7 +113,7 @@ class Building(object):
         b.wwrs                          = wwrs
         b.shades                        = shades            
         b.automated_shades              = automated_shades              
-        b.glazing_u                     = glazing_type                
+        b.glazing_type                  = glazing_type                
         b.shgc                          = shgc                
         b.custom_shades                 = custom_shades                
         b.cladding                      = cladding                
@@ -142,6 +143,18 @@ class Building(object):
         return b
 
     def compute_surfaces(self):
+        
+        cpt_dict = {}
+        for zk in self.zone_breps:
+            brep = self.zone_breps[zk]
+            srfs = rs.ExplodePolysurfaces(brep, delete_input=False)
+            for srf in srfs:
+                cpt = rs.SurfaceAreaCentroid(srf)[0]
+                gk = geometric_key(cpt)
+                if gk in cpt_dict:
+                    cpt_dict[gk] = False
+                else:
+                    cpt_dict[gk] = True
 
         for zk in self.zone_breps:
             brep = self.zone_breps[zk]
@@ -153,25 +166,29 @@ class Building(object):
                                       'walls': [],
                                       'roof': None,
                                       'floor': None}
+
             for srf in srfs:
-                n = rs.VectorUnitize(rs.SurfaceNormal(srf, (0, 0)))
-                # angle = rs.VectorAngle(n, [0, 1, 0])
-                angle = rs.Angle2([[0,0,0], [0,1,0]], [[0,0,0], n])[0]
-                if n[2] == 0:
-                    if angle < 135 and angle > 45 and n[0] > 0:
-                        self.zone_surfaces[zk]['east'].append(srf)
-                    elif angle < 225 and angle > 135:
-                        self.zone_surfaces[zk]['south'].append(srf)
-                    elif angle < 135 and angle > 45 and n[0] < 0:
-                        self.zone_surfaces[zk]['west'].append(srf)
+                cpt = rs.SurfaceAreaCentroid(srf)[0]
+                gk = geometric_key(cpt)
+                if cpt_dict[gk]:
+                    n = rs.VectorUnitize(rs.SurfaceNormal(srf, (0, 0)))
+                    # angle = rs.VectorAngle(n, [0, 1, 0])
+                    angle = rs.Angle2([[0,0,0], [0,1,0]], [[0,0,0], n])[0]
+                    if n[2] == 0:
+                        if angle < 135 and angle > 45 and n[0] > 0:
+                            self.zone_surfaces[zk]['east'].append(srf)
+                        elif angle < 225 and angle > 135:
+                            self.zone_surfaces[zk]['south'].append(srf)
+                        elif angle < 135 and angle > 45 and n[0] < 0:
+                            self.zone_surfaces[zk]['west'].append(srf)
+                        else:
+                            self.zone_surfaces[zk]['north'].append(srf)
+                            
+                        self.zone_surfaces[zk]['walls'].append(srf)
+                    elif n[2]< 0:
+                        self.zone_surfaces[zk]['floor'] = srf
                     else:
-                        self.zone_surfaces[zk]['north'].append(srf)
-                        
-                    self.zone_surfaces[zk]['walls'].append(srf)
-                elif n[2]< 0:
-                    self.zone_surfaces[zk]['floor'] = srf
-                else:
-                    self.zone_surfaces[zk]['roof'] = srf
+                        self.zone_surfaces[zk]['roof'] = srf
 
     def compute_height(self):
         zk = list(self.zone_surfaces.keys())[0]
@@ -192,8 +209,83 @@ class Building(object):
     def compute_envelope_embodied(self):
         self.envelope.compute_embodied()
 
+    def draw_structure(self):
+        c_th = self.structure.conc_thick 
+        t_th = self.structure.timber_thick
+        tot_thick = c_th + t_th
+        srfs = [self.zone_surfaces[zk]['roof'] for zk in self.zone_surfaces]
+        slabs = []
+        for srf in srfs:
+            line = rs.AddLine([0,0,0], [0,0,tot_thick])
+            srf = rs.ExtrudeSurface(srf, line)
+            slabs.append(srf)
+
+        side = self.structure.col_side
+
+        sh = self.structure.timber_thick + self.structure.conc_thick
+
+        columns = []
+        for sp, ep in self.structure.columns:
+            sp_ = rs.VectorAdd(sp, [-side/2., -side/2.,0])
+            b = rs.VectorAdd(sp_, [1,0,0])
+            c = rs.VectorAdd(sp_, [0,1,0])
+            ep_ = ep[0], ep[1], ep[2] - sh
+
+            plane = rs.PlaneFromPoints(sp_, b, c)
+            sec = rs.AddRectangle(plane, side, side)
+            col = rs.AddLine(sp, ep_)
+            columns.append(rs.ExtrudeCurve(sec, col))
+
+        bw = self.structure.beam_width
+        bh = self.structure.beam_height
+
+
+        beams = []
+        for sp, ep in self.structure.main_beams:
+            x = rs.VectorCreate(ep, sp)
+            z = [0,0,1]
+            y = rs.VectorCrossProduct(x, z)
+            y_ = rs.VectorScale(rs.VectorUnitize(y), bw / -2.)
+            
+            sp_ = rs.VectorAdd(sp, y_)
+            sp_ = rs.VectorAdd(sp_, [0,0,-bh -sh])    
+            b = rs.VectorAdd(sp_, y)
+            c = rs.VectorAdd(sp_, z)
+            plane = rs.PlaneFromPoints(sp_, b, c)
+            sec = rs.AddRectangle(plane, bw, bh)
+            beam = rs.AddLine(sp, ep)
+            beams.append(rs.ExtrudeCurve(sec, beam))
+
+        bh_ = bh *.5
+        for sp, ep in self.structure.second_beams:
+            x = rs.VectorCreate(ep, sp)
+            z = [0,0,1]
+            y = rs.VectorCrossProduct(x, z)
+            y_ = rs.VectorScale(rs.VectorUnitize(y), bw / -2.)
+            
+            sp_ = rs.VectorAdd(sp, y_)
+            sp_ = rs.VectorAdd(sp_, [0,0,-bh_ -sh])    
+            b = rs.VectorAdd(sp_, y)
+            c = rs.VectorAdd(sp_, z)
+            plane = rs.PlaneFromPoints(sp_, b, c)
+            sec = rs.AddRectangle(plane, bw, bh_)
+            beam = rs.AddLine(sp, ep)
+            beams.append(rs.ExtrudeCurve(sec, beam))
+        cores = []
+        for core in self.structure.cores:
+            sp = core[0]
+            ep = (core[0][0], core[0][1], core[0][2]+ self.height)
+            core = rs.ExtrudeCurveStraight(rs.AddPolyline(core), sp, ep)
+            cores.append(core)
+
+        return slabs, columns, beams, cores
+
+
+
 if __name__ == '__main__':
     for i in range(50): print('')
-    #TODO: compute adiabatic WALLS automatically and exclude from env embodied
     #TODO: Glazing U values are hard coded and non-sensical
     #TODO: Shading embodied is missing, needs to include automated shading too
+
+    #TODO: (low) Wood cladding is giving negative GWP. Why?
+    #TODO: (low) Display structural elements needs a check / update

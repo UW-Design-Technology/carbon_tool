@@ -65,15 +65,18 @@ class Envelope(object):
     def from_geometry(cls, building):
         env = cls()
         for zk in building.zone_surfaces:
-            env.opaque_areas['n'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['north'])[0]
-            env.opaque_areas['e'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['east'])[0]
-            env.opaque_areas['s'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['south'])[0]
-            env.opaque_areas['w'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['west'])[0]
+            for ok in ['north', 'east', 'south', 'west']:
+                if building.zone_surfaces[zk][ok]:
 
-            env.window_areas['n'][zk] = env.opaque_areas['n'][zk] * building.wwrs['north']
-            env.window_areas['e'][zk] = env.opaque_areas['e'][zk] * building.wwrs['east']
-            env.window_areas['s'][zk] = env.opaque_areas['s'][zk] * building.wwrs['south']
-            env.window_areas['w'][zk] = env.opaque_areas['w'][zk] * building.wwrs['west']
+                    env.opaque_areas[ok[0]][zk] = rs.SurfaceArea(building.zone_surfaces[zk][ok])[0]
+                    # env.opaque_areas['e'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['east'])[0]
+                    # env.opaque_areas['s'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['south'])[0]
+                    # env.opaque_areas['w'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['west'])[0]
+
+                    env.window_areas[ok[0]][zk] = env.opaque_areas[ok[0]][zk] * building.wwrs[ok]
+                    # env.window_areas['e'][zk] = env.opaque_areas['e'][zk] * building.wwrs['east']
+                    # env.window_areas['s'][zk] = env.opaque_areas['s'][zk] * building.wwrs['south']
+                    # env.window_areas['w'][zk] = env.opaque_areas['w'][zk] * building.wwrs['west']
 
 
         interior_insulation_dict = {'2x4 Wood Studs': 4,
@@ -162,7 +165,7 @@ class Envelope(object):
         int_emb = tot_opaque * int_thick * int_emb_ 
 
         win_sys = self.glazing_system
-        if win_sys == 'Aluminum Double' or win_sys == 'Wood Double':
+        if win_sys == 'double':
             glass_mat = 'Glass Double'
         else:
             glass_mat = 'Glass Triple'
