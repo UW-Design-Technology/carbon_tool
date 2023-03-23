@@ -90,24 +90,27 @@ def make_emb_pie(building):
     conn = building.structure.connections_embodied
     core = building.structure.core_embodied
     win = building.envelope.window_embodied
+    shd = building.envelope.shading_embodied
     wall = building.envelope.wall_embodied
-    tot = sum([slab, beam, col, core, conn, win, wall])
+    tot = sum([slab, beam, col, core, conn, win, shd, wall])
     # tot = sum([slab, beam, col, core, conn])
 
     slab = round(100*(slab / tot), 1)
     beam_col = round(100*((beam + col + conn) / tot), 1)
     core = round(100*(core / tot), 1)
     win = round(100*(win / tot), 1)
+    shd = round(100*(shd / tot), 1)
     wall = round(100*(wall / tot), 1)
 
     s = ['{} {}%'.format('slab', slab)] * int(slab)
     b = ['{} {}%'.format('beams & columns', beam_col)] * int(beam_col)
     c = ['{} {}%'.format('core', core)] * int(core)
     wi = ['{} {}%'.format('windows', win)] * int(win)
+    sh = ['{} {}%'.format('shading', shd)] * int(shd)
     wa = ['{} {}%'.format('walls', wall)] * int(wall)
 
     tot_ft2 = tot / building.floor_area
 
-    return s + b + c + wi + wa, tot, tot_ft2
+    return s + b + c + wi + sh + wa, tot, tot_ft2
     # return s + b + c, tot, tot_ft2
 

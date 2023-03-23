@@ -285,7 +285,8 @@ class Building(object):
 if __name__ == '__main__':
     for i in range(50): print('')
     #TODO: Glazing U values are hard coded and non-sensical
-    #TODO: Shading embodied is missing, needs to include automated shading too
+    #TODO: Think of something better for the core embodied, it is too much
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
     #TODO: (low) Display structural elements needs a check / update
+    #TODO: (low) Separate shading from windows in pie chart embodied

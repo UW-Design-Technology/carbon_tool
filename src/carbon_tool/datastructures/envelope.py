@@ -41,6 +41,7 @@ embodied: {}
 class Envelope(object):
     
     def __init__(self):
+        self.orient_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.city                   = None
@@ -60,6 +61,9 @@ class Envelope(object):
         self.ewall_framing          = None
         self.interior_insul_mat     = None
         self.int_ins_thickness      = None
+        self.shading                = None
+        self.automated_shading      = None
+        self.custom_shading         = None
 
     @classmethod
     def from_geometry(cls, building):
@@ -67,17 +71,9 @@ class Envelope(object):
         for zk in building.zone_surfaces:
             for ok in ['north', 'east', 'south', 'west']:
                 if building.zone_surfaces[zk][ok]:
-
-                    env.opaque_areas[ok[0]][zk] = rs.SurfaceArea(building.zone_surfaces[zk][ok])[0]
-                    # env.opaque_areas['e'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['east'])[0]
-                    # env.opaque_areas['s'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['south'])[0]
-                    # env.opaque_areas['w'][zk] = rs.SurfaceArea(building.zone_surfaces[zk]['west'])[0]
-
-                    env.window_areas[ok[0]][zk] = env.opaque_areas[ok[0]][zk] * building.wwrs[ok]
-                    # env.window_areas['e'][zk] = env.opaque_areas['e'][zk] * building.wwrs['east']
-                    # env.window_areas['s'][zk] = env.opaque_areas['s'][zk] * building.wwrs['south']
-                    # env.window_areas['w'][zk] = env.opaque_areas['w'][zk] * building.wwrs['west']
-
+                    env.orient_areas[ok[0]][zk] = rs.SurfaceArea(building.zone_surfaces[zk][ok])[0]
+                    env.opaque_areas[ok[0]][zk] = env.orient_areas[ok[0]][zk] * (1 - building.wwrs[ok])
+                    env.window_areas[ok[0]][zk] = env.orient_areas[ok[0]][zk] * building.wwrs[ok]
 
         interior_insulation_dict = {'2x4 Wood Studs': 4,
                                     '2x6 Wood Studs':6,
@@ -85,41 +81,42 @@ class Envelope(object):
                                     '2x10 Wood Studs':10,
                                     '2x12 Wood Studs':12}
 
-
-        # env.opaque_areas            = opaque_areas
-        # env.window_areas            = window_areas
-
         env.external_insulation     = building.exterior_insulation_material
         env.insulation_thickness    = building.exterior_insulation_thickness
         env.facade_cladding         = building.cladding
         env.glazing_system          = building.glazing_type
         env.height                  = building.height
-        # env.shade_depth_h           = building.shade_depth_h
-        # env.shade_depth_v1          = building.shade_depth_v1
-        # env.shade_depth_v2          = building.shade_depth_v2
-        # env.total_shade_len         = building.total_shade_len
+        env.shading                 = building.shades          
+        env.automated_shading       = building.automated_shades
+        env.custom_shading          = building.custom_shades
         env.wwr                     = building.wwrs
         env.city                    = building.city 
         env.int_finish              = building.interior_finish
         env.ewall_framing           = building.exterior_wall_framing
         env.interior_insul_mat      = building.interior_insulation_material
         env.int_ins_thickness       = interior_insulation_dict[building.exterior_wall_framing]
+        env.height                  = building.height
 
         return env
 
     def compute_embodied(self):
         tot_opaque = 0.  # this should be in feet?
         tot_win = 0.     # this should be in feet?
+        orient_win_areas = {}
+        orient_areas = {}
         sides = {}
         for okey in self.opaque_areas:
             opaque_orient = 0
             win_orient = 0
+            orient_areas[okey] = 0
             for zkey in self.opaque_areas[okey]:
+                orient_areas[okey] += self.orient_areas[okey][zkey]
                 opaque_orient += self.opaque_areas[okey][zkey]
                 win_orient += self.window_areas[okey][zkey]
             sides[okey] = (opaque_orient + win_orient) / self.height
             tot_opaque += opaque_orient
             tot_win += win_orient
+            orient_win_areas[okey] = win_orient
 
         # external insulation - - -
         ins_mat = self.external_insulation
@@ -177,7 +174,37 @@ class Envelope(object):
         self.wall_embodied =  ins_emb + fac_emb + int_emb + fram_emb + int_ins_emb
         self.window_embodied = win_emb
 
+
+        # shading embodied - - - - - - -
         alum_emb = float(read_materials_city('Aluminum', self.city)) / 27. # currently (kgCO2/yd3)
+        total_shading_area = 0
+
+        for srf in self.custom_shading:
+            total_shading_area += rs.SurfaceArea(srf)[0]
+
+        for okey in self.automated_shading:
+            if self.automated_shading[okey]:
+                total_shading_area += orient_win_areas[okey[0]]
+
+        shade_area = 0
+        for ok in self.shading:
+            dh = self.shading[ok]['horizontal']['depth']
+            nh = self.shading[ok]['horizontal']['num'] + 1
+            dv = self.shading[ok]['vertical']['depth']
+            nv = self.shading[ok]['vertical']['num'] + 1
+            side = sides[ok[0]]
+            if side:
+                numsec = round(side / 10., 0)
+                wwr = self.wwr[ok]
+                # area = orient_win_areas[okey[0]]
+                w_height = self.height * wwr
+                w_width = (side * wwr) / numsec
+                # print(ok, numsec, side, w_width)
+                horizontal_area = w_width * dh * nh * numsec
+                vertical_area =  w_height * dv * nv * numsec
+                shade_area += horizontal_area + vertical_area
+        total_shading_area += shade_area
+
 
         # if self.total_shade_len:
         #     shd_area = self.total_shade_len * self.shade_depth_h['s']
@@ -198,8 +225,7 @@ class Envelope(object):
         #             shd_area += vertical * self.shade_depth_v2[okey] * numsec
 
 
-        # self.shading_embodied = shd_area * 0.0164042 * alum_emb # 5 mm aluminimum
-        # self.window_embodied += self.shading_embodied
+        self.shading_embodied = total_shading_area * 0.00984252 * alum_emb # 3 mm aluminimum
 
         self.env_strings = []
         s = '{0:20}{1:32}{2:22}{3:20}{4:20}'.format('Type', 'Material', 'Thickness (ft)', 'GWP/ft3', 'GWP/ft2')
