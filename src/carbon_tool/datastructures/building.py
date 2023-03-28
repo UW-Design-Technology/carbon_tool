@@ -4,7 +4,9 @@ __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
+import os
 import carbon_tool
+import pickle
 
 from carbon_tool.datastructures import structure
 reload(structure)
@@ -26,6 +28,7 @@ class Building(object):
 
     def __init__(self):
         self.__name__                           = 'Studio2023Building'
+        self.name                               = None
         self.zone_breps                         = {}
         self.znames                             = []
         self.is_roof_adiabatic                  = False
@@ -60,7 +63,8 @@ class Building(object):
         self.height                             = None
 
     @classmethod
-    def from_gh(cls, 
+    def from_gh(cls,
+                name,
                 breps,
                 znames,
                 is_roof_adiabatic,
@@ -108,6 +112,7 @@ class Building(object):
         if not out_path:
             out_path = carbon_tool.TEMP
 
+        b.name                          = name
         b.is_roof_adiabatic             = is_roof_adiabatic        
         b.is_floor_adiabatic            = is_floor_adiabatic            
         b.wwrs                          = wwrs
@@ -134,6 +139,7 @@ class Building(object):
         b.beams_y                       = beams_y                                 
         b.cores                         = cores                                
         b.glazing_u                     = glazing_dict[glazing_type]
+        b.results                       = None
 
         b.compute_surfaces()
         b.compute_height()
@@ -280,6 +286,58 @@ class Building(object):
 
         return slabs, columns, beams, cores
 
+    def to_obj(self, output=True, path=None, name=None):
+
+        """ Exports the Building object to an .obj file through Pickle.
+
+        Parameters
+        ----------
+        output : bool
+            Print terminal output.
+
+        Returns
+        -------
+        None
+
+        """
+        if not path:
+            path = self.out_path
+        if not name:
+            name = self.name
+        filename = os.path.join(path, name + '.obj')
+
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f, protocol=2)
+
+        if output:
+            print('***** Building saved to: {0} *****\n'.format(filename))
+
+    @staticmethod
+    def from_obj(filename, output=True):
+
+        """ Imports a Building object from an .obj file through Pickle.
+
+        Parameters
+        ----------
+        filename : str
+            Path to load the Building .obj from.
+        output : bool
+            Print terminal output.
+
+        Returns
+        -------
+        obj
+            Imported Building object.
+
+        """
+
+        with open(filename, 'rb') as f:
+            building = pickle.load(f)
+
+        if output:
+            print('***** Building loaded from: {0} *****'.format(filename))
+
+        return building
 
 
 if __name__ == '__main__':
@@ -289,4 +347,6 @@ if __name__ == '__main__':
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
     #TODO: (low) Display structural elements needs a check / update
-    #TODO: (low) Separate shading from windows in pie chart embodied
+
+
+    b = Building.from_obj()
