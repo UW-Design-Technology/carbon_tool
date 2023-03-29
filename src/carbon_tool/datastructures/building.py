@@ -57,6 +57,7 @@ class Building(object):
         self.beams_y                            = None
         self.cores                              = None
         self.zone_surfaces                      = {}
+        self.zone_faces                         = {}
         self.structure                          = None
         self.envelope                           = None
         self.glazing_type                       = None
@@ -173,6 +174,14 @@ class Building(object):
                                       'roof': None,
                                       'floor': None}
 
+            self.zone_faces[zk]    = {'north': [],
+                                      'east': [],
+                                      'south': [],
+                                      'west': [],
+                                      'walls': [],
+                                      'roof': None,
+                                      'floor': None}
+
             for srf in srfs:
                 cpt = rs.SurfaceAreaCentroid(srf)[0]
                 gk = geometric_key(cpt)
@@ -183,18 +192,25 @@ class Building(object):
                     if n[2] == 0:
                         if angle < 135 and angle > 45 and n[0] > 0:
                             self.zone_surfaces[zk]['east'].append(srf)
+                            self.zone_faces[zk]['east'].append(rs.SurfacePoints(srf))
                         elif angle < 225 and angle > 135:
                             self.zone_surfaces[zk]['south'].append(srf)
+                            self.zone_faces[zk]['south'].append(rs.SurfacePoints(srf))
                         elif angle < 135 and angle > 45 and n[0] < 0:
                             self.zone_surfaces[zk]['west'].append(srf)
+                            self.zone_faces[zk]['west'].append(rs.SurfacePoints(srf))
                         else:
                             self.zone_surfaces[zk]['north'].append(srf)
+                            self.zone_faces[zk]['north'].append(rs.SurfacePoints(srf))
                             
                         self.zone_surfaces[zk]['walls'].append(srf)
+                        self.zone_faces[zk]['walls'].append(rs.SurfacePoints(srf))
                     elif n[2]< 0:
                         self.zone_surfaces[zk]['floor'] = srf
+                        self.zone_faces[zk]['floor'] = rs.SurfacePoints(srf)
                     else:
                         self.zone_surfaces[zk]['roof'] = srf
+                        self.zone_faces[zk]['roof'] = rs.SurfacePoints(srf)
 
     def compute_height(self):
         zk = list(self.zone_surfaces.keys())[0]
@@ -344,7 +360,8 @@ if __name__ == '__main__':
     #TODO: Glazing U values are hard coded and non-sensical
     #TODO: Think of something better for the core embodied, it is too much
     #TODO: Test results reading with weird zone names, honeybee adds a weird thing to the zone name
-    #TODO: Test reproducibility, should I save all zurfaces (pts) lines, etc?
+    #TODO: Sanity chekcs, plot results, hourly, etc.
+    #TODO: Test reproducibility, should I save all surfaces (pts) lines, etc?
     #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
