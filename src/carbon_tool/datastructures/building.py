@@ -188,30 +188,31 @@ class Building(object):
                 gk = geometric_key(cpt)
                 if cpt_dict[gk]:
                     n = rs.VectorUnitize(rs.SurfaceNormal(srf, (0, 0)))
-                    # angle = rs.VectorAngle(n, [0, 1, 0])
+                    pts = rs.SurfacePoints(srf)
+                    pts = [pts[0], pts[1], pts[3], pts[2]]
                     angle = rs.Angle2([[0,0,0], [0,1,0]], [[0,0,0], n])[0]
                     if n[2] == 0:
                         if angle < 135 and angle > 45 and n[0] > 0:
                             self.zone_surfaces[zk]['east'].append(srf)
-                            self.zone_faces[zk]['east'].append(rs.SurfacePoints(srf))
+                            self.zone_faces[zk]['east'].append(pts)
                         elif angle < 225 and angle > 135:
                             self.zone_surfaces[zk]['south'].append(srf)
-                            self.zone_faces[zk]['south'].append(rs.SurfacePoints(srf))
+                            self.zone_faces[zk]['south'].append(pts)
                         elif angle < 135 and angle > 45 and n[0] < 0:
                             self.zone_surfaces[zk]['west'].append(srf)
-                            self.zone_faces[zk]['west'].append(rs.SurfacePoints(srf))
+                            self.zone_faces[zk]['west'].append(pts)
                         else:
                             self.zone_surfaces[zk]['north'].append(srf)
-                            self.zone_faces[zk]['north'].append(rs.SurfacePoints(srf))
+                            self.zone_faces[zk]['north'].append(pts)
                             
                         self.zone_surfaces[zk]['walls'].append(srf)
-                        self.zone_faces[zk]['walls'].append(rs.SurfacePoints(srf))
+                        self.zone_faces[zk]['walls'].append(pts)
                     elif n[2]< 0:
                         self.zone_surfaces[zk]['floor'] = srf
-                        self.zone_faces[zk]['floor'] = rs.SurfacePoints(srf)
+                        self.zone_faces[zk]['floor'] = pts
                     else:
                         self.zone_surfaces[zk]['roof'] = srf
-                        self.zone_faces[zk]['roof'] = rs.SurfacePoints(srf)
+                        self.zone_faces[zk]['roof'] = pts
 
     def compute_height(self):
         zk = list(self.zone_surfaces.keys())[0]
@@ -384,9 +385,12 @@ if __name__ == '__main__':
     #TODO: Test reproducibility, should I save all surfaces (pts) lines, etc?
     #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?
     #TODO: what oher geometry needs to be saved in non GUID form?
+    #TODO: report hourly somehow
+    #TODO: Sanity check the building area
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
     #TODO: (low) Display structural elements needs a check / update
+    
     import os
 
     filepath = os.path.join(carbon_tool.TEMP, 'test_building_20230328163220.obj')
