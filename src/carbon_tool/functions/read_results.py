@@ -73,6 +73,15 @@ def read_eso_preamble(building, filepath):
         stuff = line.split(',')
         key = stuff[0]
         zone = stuff[2].split(' ')[0]
+        # print(zone)
+        stuff_ = zone.split('_')[:-1]
+        zone = ''
+        for i, s in enumerate(stuff_):
+            zone += s
+            if i < len(stuff_) - 1:
+                zone += '_'
+        # print(zone)
+        
         item = stuff[3]
         if zone in zones:
             if 'cooling' in item:
@@ -154,3 +163,9 @@ def read_error_file(filepath, print_error=True):
             print(line)
             # print('')
     return lines
+
+if __name__ == '__main__':
+
+
+
+    re

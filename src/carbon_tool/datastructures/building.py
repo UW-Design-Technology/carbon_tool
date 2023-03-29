@@ -9,11 +9,11 @@ import carbon_tool
 import pickle
 
 from carbon_tool.datastructures import structure
-reload(structure)
+# reload(structure)
 from carbon_tool.datastructures.structure import Structure
 
 from carbon_tool.datastructures import envelope
-reload(envelope)
+# reload(envelope)
 from carbon_tool.datastructures.envelope import Envelope
 
 from carbon_tool.functions import geometric_key
@@ -300,6 +300,7 @@ class Building(object):
         None
 
         """
+
         if not path:
             path = self.out_path
         if not name:
@@ -313,13 +314,13 @@ class Building(object):
             print('***** Building saved to: {0} *****\n'.format(filename))
 
     @staticmethod
-    def from_obj(filename, output=True):
+    def from_obj(filepath, output=True):
 
         """ Imports a Building object from an .obj file through Pickle.
 
         Parameters
         ----------
-        filename : str
+        filepath : str
             Path to load the Building .obj from.
         output : bool
             Print terminal output.
@@ -330,12 +331,10 @@ class Building(object):
             Imported Building object.
 
         """
-
-        with open(filename, 'rb') as f:
+        with open(filepath, 'rb') as f:
             building = pickle.load(f)
-
         if output:
-            print('***** Building loaded from: {0} *****'.format(filename))
+            print('***** Building loaded from: {0} *****'.format(filepath))
 
         return building
 
@@ -344,9 +343,11 @@ if __name__ == '__main__':
     for i in range(50): print('')
     #TODO: Glazing U values are hard coded and non-sensical
     #TODO: Think of something better for the core embodied, it is too much
+    #TODO: Test results reading with weird zone names, honeybee adds a weird thing to the zone name
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
     #TODO: (low) Display structural elements needs a check / update
+    import os
 
-
-    b = Building.from_obj()
+    filepath = os.path.join(carbon_tool.TEMP, 'test_building_20230328163220.obj')
+    b = Building.from_obj(filepath)
