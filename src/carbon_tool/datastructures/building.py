@@ -17,6 +17,7 @@ from carbon_tool.datastructures import envelope
 from carbon_tool.datastructures.envelope import Envelope
 
 from carbon_tool.functions import geometric_key
+from carbon_tool.functions import area_polygon
 
 try:
     import rhinoscriptsyntax as rs
@@ -107,7 +108,7 @@ class Building(object):
                         'Atlanta': carbon_tool.ATLANTA,
                         }
 
-        glazing_dict = {'double': .35, 'triple': .45}  #### This must be chanced to good numbers
+        glazing_dict = {'double': .4, 'triple': .2}  #### Btu/h-ft2-F
 
 
         if not out_path:
@@ -222,7 +223,9 @@ class Building(object):
     def floor_area(self):
         fa = 0
         for zk in self.zone_surfaces:
-            fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
+            # fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
+            pts = self.zone_faces[zk]['floor']
+            fa += area_polygon(pts)
         return fa
 
     def compute_structure_embodied(self):
@@ -302,6 +305,25 @@ class Building(object):
 
         return slabs, columns, beams, cores
 
+    def report_operational(self):
+        tot_heat = 0
+        tot_cool = 0
+        tot_light = 0
+        for key in self.results:
+            for zone in self.results[key]:
+                tot_heat += self.results[key][zone]['heating'] 
+                tot_cool += self.results[key][zone]['cooling']
+                tot_light += self.results[key][zone]['lighting']
+
+        tot_heat  /= 3.6e+6  # J to kwh
+        tot_cool  /= 3.6e+6  # J to kwh
+        tot_light /= 3.6e+6  # J to kwh
+
+        tot_heat /= 3  # COP
+        tot_cool /= 3  # COP
+
+        return tot_heat, tot_cool, tot_light
+
     def to_obj(self, output=True, path=None, name=None):
 
         """ Exports the Building object to an .obj file through Pickle.
@@ -357,9 +379,7 @@ class Building(object):
 
 if __name__ == '__main__':
     for i in range(50): print('')
-    #TODO: Glazing U values are hard coded and non-sensical
-    #TODO: Think of something better for the core embodied, it is too much
-    #TODO: Test results reading with weird zone names, honeybee adds a weird thing to the zone name
+
     #TODO: Sanity chekcs, plot results, hourly, etc.
     #TODO: Test reproducibility, should I save all surfaces (pts) lines, etc?
     #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?

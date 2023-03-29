@@ -1,65 +1,33 @@
 import os
 import carbon_tool
 
+from carbon_tool.datastructures import Building
+
 def make_pies(filename, num_years):
     path = carbon_tool.TEMP
 
     filepath = os.path.join(path, filename)
-    fh = open(filepath, 'r')
-    lines = fh.readlines()
-    fh.close()
+
+    b = Building.from_obj(filepath)
 
     # embodied - - - -
 
-    labels = lines[29].split(',')
-
-
-    emb = lines[30].split(',')
-    slab, beam, col, win, wall, tot = emb[1:7]
-
-    slab = float(slab)
-    beam = float(beam)
-    col = float(col)
-    win = float(win)
-    wall = float(wall)
-    tot = float(tot)
-
-    slab = round(100*(slab / tot), 1)
-    beam = round(100*(beam / tot), 1)
-    col = round(100*(col / tot), 1)
-    win = round(100*(win / tot), 1)
-    wall = round(100*(wall / tot), 1)
-
-    s = ['{} {}%'.format(labels[1], slab)] * int(slab)
-    b = ['{} {}%'.format(labels[2], beam)] * int(beam)
-    c = ['{} {}%'.format(labels[3], col)] * int(col)
-    wi = ['{} {}%'.format(labels[4], win)] * int(win)
-    wa = ['{} {}%'.format(labels[5], wall)] * int(wall)
-
-    embodied = s + b + c + wi + wa
+    embodied, tot, tot_ft2 = make_emb_pie(b)
 
     # operational - - - -
 
-    cool = float(lines[66].split(',')[6])
-    heat = float(lines[67].split(',')[6])
-    li = float(lines[68].split(',')[6])
-    eq = float(lines[69].split(',')[6])
-    wat = float(lines[70].split(',')[6])
-    tot_ = float(lines[71].split(',')[6])
+    heat, cool, li = b.report_operational()
+    tot_ = heat + cool + li
 
     cool = round(100*(cool / tot_), 1)
     heat = round(100*(heat / tot_), 1)
     li = round(100*(li / tot_), 1)
-    eq = round(100*(eq / tot_), 1)
-    wat = round(100*(wat / tot_), 1)
 
     s = ['cooling {}%'.format(cool)] * int(cool)
     b = ['heating {}%'.format(heat)] * int(heat)
     c = ['lighting {}%'.format(li)] * int(li)
-    wi = ['equipment {}%'.format(eq)] * int(eq)
-    wa = ['hot water {}%'.format(wat)] * int(wat)
 
-    operational = s + b + c + wi + wa
+    operational = s + b + c
 
     # operational vs embodied  - - - 
 
@@ -73,15 +41,7 @@ def make_pies(filename, num_years):
     o = ['operational {}%'.format(o)] * int(o)
 
     emb_v_op = e + o
-
-    # per ft^2 - - - - - - - -
-    tot_ = float(lines[71].split(',')[6])
-    
-    ft2 = float(lines[33].split(',')[6])
-    embft = tot / ft2
-    opft = tot_ / ft2
-
-    return embodied, operational, emb_v_op, embft, opft
+    return embodied, operational, emb_v_op  #, embft, opft
 
 def make_emb_pie(building):
     slab = building.structure.slab_embodied
