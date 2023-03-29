@@ -40,7 +40,8 @@ class Structure(object):
         self.liveload = 80  # lbs / ft2 
         self.clt_density = 36  # lbs / ft3
         self.concrete_density = 149.8271  # lbs / ft3
-
+        
+        self.name               = 'carbon_tool Structure'
         self.city               = None
         self.area               = None
         self.composite          = None
@@ -71,6 +72,7 @@ class Structure(object):
         structure.add_columns_beams(building)
         structure.area = building.floor_area
 
+        structure.name               += '{}_'.format(building.name)
         structure.city               = building.city
         structure.composite          = building.composite_slab
         structure.btype              = building.building_type

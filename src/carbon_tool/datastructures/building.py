@@ -344,6 +344,8 @@ if __name__ == '__main__':
     #TODO: Glazing U values are hard coded and non-sensical
     #TODO: Think of something better for the core embodied, it is too much
     #TODO: Test results reading with weird zone names, honeybee adds a weird thing to the zone name
+    #TODO: Test reproducibility, should I save all zurfaces (pts) lines, etc?
+    #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
     #TODO: (low) Display structural elements needs a check / update
