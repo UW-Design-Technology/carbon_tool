@@ -7,6 +7,7 @@ __version__ = "0.1.0"
 import os
 import carbon_tool
 import pickle
+from datetime import datetime
 
 from carbon_tool.datastructures import structure
 # reload(structure)
@@ -325,6 +326,50 @@ class Building(object):
 
         return tot_heat, tot_cool, tot_light
 
+    def write_csvs(self):
+        fh = open(os.path.join(self.out_path, self.name, 'operational_hourly_results.csv'), 'w')
+        times = []
+        data = {}
+        for key in self.results:
+            _, h, d, m = key.split('_')
+            time = datetime(2023, int(m), int(d), int(h))
+            times.append(time)
+            data[time] = {}
+            for zone in self.results[key]:
+                heat = self.results[key][zone]['heating'] 
+                cool = self.results[key][zone]['cooling']
+                light = self.results[key][zone]['lighting']
+
+                heat  /= 3.6e+6  # J to kwh
+                cool  /= 3.6e+6  # J to kwh
+                light /= 3.6e+6  # J to kwh
+                heat /= 3  # COP
+                cool /= 3  # COP
+
+                data[time][zone] = {'heat': heat,
+                                    'cool': cool,
+                                    'light': light,
+                                    }
+
+        fh.write('time,')
+        for zone in data[time]:
+            fh.write('{0} heating,{0} cooling,{0} lighting,'.format(zone))
+        fh.write('\n')
+
+
+        times = sorted(times)
+        for time in times:
+            fh.write('{},'.format(time))
+            for zone in data[time]:
+                heat = data[time][zone]['heat']
+                cool = data[time][zone]['cool']
+                light = data[time][zone]['light']
+                fh.write('{},{},{},'.format(heat, cool, light))
+            fh.write('\n')
+        fh.close()
+        print(self.floor_area)
+
+
     def to_obj(self, output=True, path=None, name=None):
 
         """ Exports the Building object to an .obj file through Pickle.
@@ -385,8 +430,6 @@ if __name__ == '__main__':
     #TODO: Test reproducibility, should I save all surfaces (pts) lines, etc?
     #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?
     #TODO: what oher geometry needs to be saved in non GUID form?
-    #TODO: report hourly somehow
-    #TODO: Sanity check the building area
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
     #TODO: (low) Display structural elements needs a check / update
