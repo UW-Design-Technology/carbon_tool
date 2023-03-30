@@ -353,7 +353,7 @@ class Building(object):
 
         fh.write('time,')
         for zone in data[time]:
-            fh.write('{0} heating,{0} cooling,{0} lighting,'.format(zone))
+            fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
         fh.write('\n')
 
 
@@ -367,8 +367,6 @@ class Building(object):
                 fh.write('{},{},{},'.format(heat, cool, light))
             fh.write('\n')
         fh.close()
-        print(self.floor_area)
-
 
     def to_obj(self, output=True, path=None, name=None):
 
