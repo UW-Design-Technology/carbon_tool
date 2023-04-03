@@ -96,6 +96,14 @@ class Building(object):
                 cores):
 
         b = cls()
+
+        if not znames or znames == ['']:
+            znames = ['zone_{}'.format(i) for i in range(len(breps))]
+        elif len(znames) != len(breps):
+            znames_ = ['zone_{}'.format(i) for i in range(len(znames), len(breps))]
+            znames.extend(znames_)
+        print(znames)
+
         b.znames = znames
 
         for i, zname in enumerate(znames):
@@ -428,7 +436,6 @@ if __name__ == '__main__':
     #TODO: Test reproducibility, should I save all surfaces (pts) lines, etc?
     #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?
     #TODO: what oher geometry needs to be saved in non GUID form?
-    #TODO: fix error when zone breps and names do not match length
     #TODO: Add embodied and total operational results
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
