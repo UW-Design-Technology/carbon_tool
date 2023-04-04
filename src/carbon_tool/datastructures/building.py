@@ -482,9 +482,6 @@ if __name__ == '__main__':
     for i in range(50): print('')
 
     #TODO: Sanity chekcs, plot results, hourly, etc.
-    #TODO: Test reproducibility, should I save all surfaces (pts) lines, etc?
-    #TODO: On a related note, pickle is not working well, should I switch to json and use meshes?
-    #TODO: what oher geometry needs to be saved in non GUID form?
     #TODO: Add embodied and total operational results
 
     #TODO: (low) Wood cladding is giving negative GWP. Why?
