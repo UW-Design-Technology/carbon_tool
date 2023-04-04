@@ -335,6 +335,55 @@ class Building(object):
         return tot_heat, tot_cool, tot_light
 
     def write_csvs(self):
+        self.write_hourly_operational()
+        self.write_daily_operational()
+
+    def write_daily_operational(self):
+
+        results = {}
+        for key in self.results:
+            _, h, d, m = key.split('_')
+            # tkey = '0_0_{}_{}'.format(d, m)
+            tkey = datetime(2023, int(m), int(d), 0)
+            if tkey not in results:
+                results[tkey] = {}
+            for zone in self.results[key]:
+                if zone not in results[tkey]:
+                    results[tkey][zone] = {'heating': 0, 'cooling':0, 'lighting': 0}
+
+                results[tkey][zone]['heating'] += self.results[key][zone]['heating']
+                results[tkey][zone]['cooling'] += self.results[key][zone]['cooling']
+                results[tkey][zone]['lighting'] += self.results[key][zone]['lighting']
+
+        fh = open(os.path.join(self.out_path, self.name, 'operational_daily_results.csv'), 'w')
+
+
+        fh.write('time,')
+        for zone in results[tkey]:
+            fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
+        fh.write('\n')
+
+        times = sorted(list(results.keys()))
+
+        for time in times:
+            fh.write('{},'.format(time))
+            for zone in results[time]:
+                heat = results[time][zone]['heating']
+                cool = results[time][zone]['cooling']
+                light = results[time][zone]['lighting']
+                
+                heat  /= 3.6e+6  # J to kwh
+                cool  /= 3.6e+6  # J to kwh
+                light /= 3.6e+6  # J to kwh
+                heat /= 3  # COP
+                cool /= 3  # COP
+
+                fh.write('{},{},{},'.format(heat, cool, light))
+            fh.write('\n')
+        fh.close()
+
+    def write_hourly_operational(self):
+
         fh = open(os.path.join(self.out_path, self.name, 'operational_hourly_results.csv'), 'w')
         times = []
         data = {}
