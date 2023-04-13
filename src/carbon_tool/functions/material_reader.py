@@ -56,6 +56,7 @@ def read_materials_city(material, city):
     #     return data[material]['National']
     # else:
     #     return data[material][city]
+    # return data[material][city]
     return data[material]['National']
 
 if __name__ == "__main__":
