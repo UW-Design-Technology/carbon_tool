@@ -39,6 +39,8 @@ MILWAUKEE = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_WI_
 SAN_ANTONIO = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_TX_San.Antonio.Intl.AP.722530_TMY3.epw'))
 NEW_YORK = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_NY_New.York-Central.Park.725033_TMY3.epw'))
 LOS_ANGELES = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_CA_Los.Angeles.Intl.AP.722950_TMY3.epw'))
-
-
+SAN_FRANCISCO = os.path.abspath(os.path.join(root, 'data', 'weather_files','USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw'))
+MINNEAPOLIS = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_MN_Minneapolis-St.Paul.Intl.AP.726580_TMY3.epw'))
+PHOENIX = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_AZ_Phoenix-Sky.Harbor.Intl.AP.722780_TMY3.epw'))
+MIAMI = os.path.abspath(os.path.join(root, 'data', 'weather_files', 'USA_FL_Miami.Intl.AP.722020_TMY3.epw'))
 __all__ = ["HOME", "DATA", "DOCS", "TEMP"]

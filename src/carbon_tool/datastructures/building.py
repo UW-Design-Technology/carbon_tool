@@ -115,6 +115,10 @@ class Building(object):
                         'San Antonio': carbon_tool.SAN_ANTONIO,
                         'New York': carbon_tool.NEW_YORK,
                         'Atlanta': carbon_tool.ATLANTA,
+                        'Minneapolis': carbon_tool.MINNEAPOLIS,
+                        'Phoenix': carbon_tool.PHOENIX,
+                        'San Francisco': carbon_tool.SAN_FRANCISCO,
+                        'Miami': carbon_tool.MIAMI,
                         }
 
         glazing_dict = {'double': .4, 'triple': .2}  #### Btu/h-ft2-F
@@ -382,7 +386,6 @@ class Building(object):
                 fh.write('{},{},{},'.format(heat, cool, light))
             fh.write('\n')
         fh.close()
-
 
     def write_daily_operational(self):
 
