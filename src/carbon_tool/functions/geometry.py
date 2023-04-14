@@ -10,6 +10,15 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 
+def rhino_surface_points(srf):
+    import Rhino
+    import rhinoscriptsyntax as rs
+
+    brep = rs.coercebrep(srf)
+    pts = [e.PointAtStart for e in brep.Edges]
+    return pts
+
+
 def midpoint_point_point(a, b):
     return [0.5 * (a[0] + b[0]),
             0.5 * (a[1] + b[1]),

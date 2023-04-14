@@ -10,15 +10,19 @@ import pickle
 from datetime import datetime
 
 from carbon_tool.datastructures import structure
-# reload(structure)
+reload(structure)
 from carbon_tool.datastructures.structure import Structure
 
 from carbon_tool.datastructures import envelope
-# reload(envelope)
+reload(envelope)
 from carbon_tool.datastructures.envelope import Envelope
 
-from carbon_tool.functions import geometric_key
-from carbon_tool.functions import area_polygon
+from carbon_tool.functions import geometry
+reload(geometry)
+
+from carbon_tool.functions.geometry import geometric_key
+from carbon_tool.functions.geometry import area_polygon
+from carbon_tool.functions.geometry import rhino_surface_points
 
 try:
     import rhinoscriptsyntax as rs
@@ -102,7 +106,6 @@ class Building(object):
         elif len(znames) != len(breps):
             znames_ = ['zone_{}'.format(i) for i in range(len(znames), len(breps))]
             znames.extend(znames_)
-        print(znames)
 
         b.znames = znames
 
@@ -201,8 +204,14 @@ class Building(object):
                 gk = geometric_key(cpt)
                 if cpt_dict[gk]:
                     n = rs.VectorUnitize(rs.SurfaceNormal(srf, (0, 0)))
-                    pts = rs.SurfacePoints(srf)
-                    pts = [pts[0], pts[1], pts[3], pts[2]]
+                    if rs.IsSurfaceTrimmed(srf):
+                        pts = rhino_surface_points(srf)
+                        # if len(pts) == 4:
+                        #     pts = rs.SurfacePoints(srf)
+                        #     pts = [pts[0], pts[1], pts[3], pts[2]]
+                    else:
+                        pts = rs.SurfacePoints(srf)
+                        pts = [pts[0], pts[1], pts[3], pts[2]]
                     angle = rs.Angle2([[0,0,0], [0,1,0]], [[0,0,0], n])[0]
                     if n[2] == 0:
                         if angle < 135 and angle > 45 and n[0] > 0:
@@ -229,8 +238,8 @@ class Building(object):
 
     def compute_height(self):
         zk = list(self.zone_surfaces.keys())[0]
-        roof = rs.SurfacePoints(self.zone_surfaces[zk]['roof'])
-        floor = rs.SurfacePoints(self.zone_surfaces[zk]['floor'])
+        roof = rhino_surface_points(self.zone_surfaces[zk]['roof'])
+        floor = rhino_surface_points(self.zone_surfaces[zk]['floor'])
         self.height = roof[0][2] - floor[0][2]
 
     @property
@@ -239,6 +248,7 @@ class Building(object):
         for zk in self.zone_surfaces:
             # fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
             pts = self.zone_faces[zk]['floor']
+            # pts.append(pts[0])
             fa += area_polygon(pts)
         return fa
 

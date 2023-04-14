@@ -71,7 +71,8 @@ class Envelope(object):
         for zk in building.zone_surfaces:
             for ok in ['north', 'east', 'south', 'west']:
                 if building.zone_surfaces[zk][ok]:
-                    env.orient_areas[ok[0]][zk] = rs.SurfaceArea(building.zone_surfaces[zk][ok])[0]
+                    areas = [rs.SurfaceArea(srf)[0] for srf in building.zone_surfaces[zk][ok]]
+                    env.orient_areas[ok[0]][zk] = sum(areas)
                     env.opaque_areas[ok[0]][zk] = env.orient_areas[ok[0]][zk] * (1 - building.wwrs[ok])
                     env.window_areas[ok[0]][zk] = env.orient_areas[ok[0]][zk] * building.wwrs[ok]
 
@@ -225,7 +226,7 @@ class Envelope(object):
         #             shd_area += vertical * self.shade_depth_v2[okey] * numsec
 
 
-        self.shading_embodied = total_shading_area * 0.00984252 * alum_emb # 3 mm aluminimum
+        self.shading_embodied = total_shading_area * 0.00492126 * alum_emb # 1.5 mm aluminimum
 
         self.env_strings = []
         s = '{0:20}{1:32}{2:22}{3:20}{4:20}'.format('Type', 'Material', 'Thickness (ft)', 'GWP/ft3', 'GWP/ft2')
