@@ -26,7 +26,6 @@ Structure datastructure: {}
 ################################################################################
 """
 
-# TODO: Add gypsum to beams and columns
 
 class Structure(object):
     def __init__(self):
@@ -66,7 +65,7 @@ class Structure(object):
     def from_geometry(cls, building):
         structure = cls()
         structure.add_columns_beams(building)
-        structure.area = building.floor_area
+        structure.area = building.floor_area + building.balcony_area
 
         structure.name               += '{}_'.format(building.name)
         structure.city               = building.city

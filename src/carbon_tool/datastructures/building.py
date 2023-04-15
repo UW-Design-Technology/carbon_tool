@@ -68,6 +68,10 @@ class Building(object):
         self.envelope                           = None
         self.glazing_type                       = None
         self.height                             = None
+        self.context_buildings                  = None
+        self.balconies                          = None
+        self.context_building_faces             = {}
+        self.balcony_faces                      = {}
 
     @classmethod
     def from_gh(cls,
@@ -97,7 +101,9 @@ class Building(object):
                 columns,
                 beams_x,
                 beams_y,
-                cores):
+                cores,
+                context_buildings,
+                balconies):
 
         b = cls()
 
@@ -158,6 +164,8 @@ class Building(object):
         b.cores                         = cores                                
         b.glazing_u                     = glazing_dict[glazing_type]
         b.results                       = None
+        b.context_buildings              = context_buildings
+        b.balconies                     = balconies
 
         b.compute_surfaces()
         b.compute_height()
@@ -236,6 +244,16 @@ class Building(object):
                         self.zone_surfaces[zk]['roof'] = srf
                         self.zone_faces[zk]['roof'] = pts
 
+        for i, srf in enumerate(self.balconies):
+            pts = rs.SurfacePoints(srf)
+            pts = [pts[0], pts[1], pts[3], pts[2]]
+            self.balcony_faces[i] = pts
+
+        for i, srf in enumerate(self.context_buildings):
+            pts = rs.SurfacePoints(srf)
+            pts = [pts[0], pts[1], pts[3], pts[2]]
+            self.context_building_faces[i] = pts
+
     def compute_height(self):
         zk = list(self.zone_surfaces.keys())[0]
         roof = rhino_surface_points(self.zone_surfaces[zk]['roof'])
@@ -251,6 +269,14 @@ class Building(object):
             # pts.append(pts[0])
             fa += area_polygon(pts)
         return fa
+
+    @property
+    def balcony_area(self):
+        ba = 0
+        for k in self.balcony_faces:
+            pts = self.balcony_faces[k]
+            ba += area_polygon(pts)
+        return ba
 
     def compute_structure_embodied(self):
         self.structure.compute_embodied()
