@@ -402,12 +402,16 @@ class Building(object):
         fh.write('time,')
         for zone in results[tkey]:
             fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
-        fh.write('\n')
+        fh.write('TOTAL heating (KWh),TOTAL cooling (KWh),TOTAL lighting (KWh)\n'.format(zone))
+        # fh.write('\n')
 
         times = sorted(list(results.keys()))
 
         for time in times:
             fh.write('{},'.format(time))
+            tot_heat = 0
+            tot_cool = 0
+            tot_light = 0
             for zone in results[time]:
                 heat = results[time][zone]['heating']
                 cool = results[time][zone]['cooling']
@@ -419,8 +423,14 @@ class Building(object):
                 heat /= 3  # COP
                 cool /= 3  # COP
 
+                tot_heat += heat
+                tot_cool += cool
+                tot_light += light
+
                 fh.write('{},{},{},'.format(heat, cool, light))
-            fh.write('\n')
+
+            fh.write('{},{},{}\n'.format(tot_heat, tot_cool, tot_light))
+            # fh.write('\n')
         fh.close()
 
     def write_daily_operational(self):
@@ -446,12 +456,16 @@ class Building(object):
         fh.write('time,')
         for zone in results[tkey]:
             fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
-        fh.write('\n')
+        fh.write('TOTAL heating (KWh),TOTAL cooling (KWh),TOTAL lighting (KWh)\n'.format(zone))
+        # fh.write('\n')
 
         times = sorted(list(results.keys()))
 
         for time in times:
             fh.write('{},'.format(time))
+            tot_heat = 0
+            tot_cool = 0
+            tot_light = 0
             for zone in results[time]:
                 heat = results[time][zone]['heating']
                 cool = results[time][zone]['cooling']
@@ -463,8 +477,13 @@ class Building(object):
                 heat /= 3  # COP
                 cool /= 3  # COP
 
+                tot_heat += heat
+                tot_cool += cool
+                tot_light += light
+
                 fh.write('{},{},{},'.format(heat, cool, light))
-            fh.write('\n')
+            fh.write('{},{},{}\n'.format(tot_heat, tot_cool, tot_light))
+            # fh.write('\n')
         fh.close()
 
     def write_hourly_operational(self):
@@ -496,18 +515,28 @@ class Building(object):
         fh.write('time,')
         for zone in data[time]:
             fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
-        fh.write('\n')
+        fh.write('TOTAL heating (KWh),TOTAL cooling (KWh),TOTAL lighting (KWh)\n'.format(zone))
+        # fh.write('\n')
 
 
         times = sorted(times)
         for time in times:
             fh.write('{},'.format(time))
+            tot_heat = 0
+            tot_cool = 0
+            tot_light = 0
             for zone in data[time]:
                 heat = data[time][zone]['heat']
                 cool = data[time][zone]['cool']
                 light = data[time][zone]['light']
+
+                tot_heat += heat
+                tot_cool += cool
+                tot_light += light
+
                 fh.write('{},{},{},'.format(heat, cool, light))
-            fh.write('\n')
+            fh.write('{},{},{}\n'.format(tot_heat, tot_cool, tot_light))
+            # fh.write('\n')
         fh.close()
 
     def to_obj(self, output=True, path=None, name=None):
@@ -565,12 +594,6 @@ class Building(object):
 
 if __name__ == '__main__':
     for i in range(50): print('')
-
-    #TODO: Sanity chekcs, plot results, hourly, etc.
-    #TODO: Add embodied and total operational results
-
-    #TODO: (low) Wood cladding is giving negative GWP. Why?
-    #TODO: (low) Display structural elements needs a check / update
     
     import os
 
