@@ -37,6 +37,7 @@ class Building(object):
         self.name                               = None
         self.zone_breps                         = {}
         self.znames                             = []
+        self.volume                             = None
         self.is_roof_adiabatic                  = False
         self.is_floor_adiabatic                 = False
         self.wwrs                               = {}
@@ -115,8 +116,10 @@ class Building(object):
 
         b.znames = znames
 
+        volume = 0
         for i, zname in enumerate(znames):
             b.zone_breps[zname] = breps[i]
+            volume += rs.SurfaceVolume(breps[i])[0]
 
         weather_dict = {'Seattle': carbon_tool.SEATTLE,
                         'Los Angeles': carbon_tool.LOS_ANGELES,
@@ -137,6 +140,7 @@ class Building(object):
             out_path = carbon_tool.TEMP
 
         b.name                          = name
+        b.volume                        = volume
         b.is_roof_adiabatic             = is_roof_adiabatic        
         b.is_floor_adiabatic            = is_floor_adiabatic            
         b.wwrs                          = wwrs
@@ -164,7 +168,7 @@ class Building(object):
         b.cores                         = cores                                
         b.glazing_u                     = glazing_dict[glazing_type]
         b.results                       = None
-        b.context_buildings              = context_buildings
+        b.context_buildings             = context_buildings
         b.balconies                     = balconies
 
         b.compute_surfaces()
@@ -270,6 +274,13 @@ class Building(object):
             fa += area_polygon(pts)
         return fa
 
+    def zone_areas(self):
+        string = ''
+        for zk in self.znames:
+            pts = self.zone_faces[zk]['floor']
+            area = area_polygon(pts)
+            string += '{:>12} = {:9.4f}\n'.format(zk, area)
+        return string
     @property
     def balcony_area(self):
         ba = 0
@@ -388,7 +399,7 @@ class Building(object):
             tkey = datetime(2023, int(m), 1, 0)
             if tkey not in results:
                 results[tkey] = {}
-            for zone in self.results[key]:
+            for zone in self.znames:
                 if zone not in results[tkey]:
                     results[tkey][zone] = {'heating': 0, 'cooling':0, 'lighting': 0}
 
@@ -400,7 +411,7 @@ class Building(object):
 
 
         fh.write('time,')
-        for zone in results[tkey]:
+        for zone in self.znames:
             fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
         fh.write('TOTAL heating (KWh),TOTAL cooling (KWh),TOTAL lighting (KWh)\n'.format(zone))
         # fh.write('\n')
@@ -412,7 +423,7 @@ class Building(object):
             tot_heat = 0
             tot_cool = 0
             tot_light = 0
-            for zone in results[time]:
+            for zone in self.znames:
                 heat = results[time][zone]['heating']
                 cool = results[time][zone]['cooling']
                 light = results[time][zone]['lighting']
@@ -442,7 +453,7 @@ class Building(object):
             tkey = datetime(2023, int(m), int(d), 0)
             if tkey not in results:
                 results[tkey] = {}
-            for zone in self.results[key]:
+            for zone in self.znames:
                 if zone not in results[tkey]:
                     results[tkey][zone] = {'heating': 0, 'cooling':0, 'lighting': 0}
 
@@ -454,7 +465,7 @@ class Building(object):
 
 
         fh.write('time,')
-        for zone in results[tkey]:
+        for zone in self.znames:
             fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
         fh.write('TOTAL heating (KWh),TOTAL cooling (KWh),TOTAL lighting (KWh)\n'.format(zone))
         # fh.write('\n')
@@ -466,7 +477,7 @@ class Building(object):
             tot_heat = 0
             tot_cool = 0
             tot_light = 0
-            for zone in results[time]:
+            for zone in self.znames:
                 heat = results[time][zone]['heating']
                 cool = results[time][zone]['cooling']
                 light = results[time][zone]['lighting']
@@ -496,7 +507,7 @@ class Building(object):
             time = datetime(2023, int(m), int(d), int(h))
             times.append(time)
             data[time] = {}
-            for zone in self.results[key]:
+            for zone in self.znames:
                 heat = self.results[key][zone]['heating'] 
                 cool = self.results[key][zone]['cooling']
                 light = self.results[key][zone]['lighting']
@@ -513,7 +524,7 @@ class Building(object):
                                     }
 
         fh.write('time,')
-        for zone in data[time]:
+        for zone in self.znames:
             fh.write('{0} heating (KWh),{0} cooling (KWh),{0} lighting (KWh),'.format(zone))
         fh.write('TOTAL heating (KWh),TOTAL cooling (KWh),TOTAL lighting (KWh)\n'.format(zone))
         # fh.write('\n')
@@ -525,7 +536,7 @@ class Building(object):
             tot_heat = 0
             tot_cool = 0
             tot_light = 0
-            for zone in data[time]:
+            for zone in self.znames:
                 heat = data[time][zone]['heat']
                 cool = data[time][zone]['cool']
                 light = data[time][zone]['light']
@@ -591,6 +602,12 @@ class Building(object):
 
         return building
 
+    def surface_to_volume(self):
+        area = 0
+        for zk in self.zone_faces:
+            for wall in self.zone_faces[zk]['walls']:
+                area += area_polygon(wall)
+        return area / self.volume
 
 if __name__ == '__main__':
     for i in range(50): print('')
