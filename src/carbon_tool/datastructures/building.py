@@ -276,10 +276,13 @@ class Building(object):
 
     def zone_areas(self):
         string = ''
+        tot = 0
         for zk in self.znames:
             pts = self.zone_faces[zk]['floor']
             area = area_polygon(pts)
+            tot += area
             string += '{:>12} = {:9.4f}\n'.format(zk, area)
+        string += '{:>12} = {:9.4f}\n'.format('total', tot)
         return string
     @property
     def balcony_area(self):
