@@ -392,6 +392,38 @@ class Building(object):
         self.write_hourly_operational()
         self.write_daily_operational()
         self.write_monthly_operational()
+        self.write_embodied_csv()
+
+    def write_embodied_csv(self):
+        slab = self.structure.slab_embodied
+        beam = self.structure.beam_embodied
+        col = self.structure.column_embodied
+        conn = self.structure.connections_embodied
+        core = self.structure.core_embodied
+        win = self.envelope.window_embodied
+        shd = self.envelope.shading_embodied
+        wall = self.envelope.wall_embodied
+        tot = sum([slab, beam, col, core, conn, win, shd, wall])
+
+        slab = round(100*(slab / tot), 1)
+        beam_col = round(100*((beam + col + conn) / tot), 1)
+        core = round(100*(core / tot), 1)
+        win = round(100*(win / tot), 1)
+        shd = round(100*(shd / tot), 1)
+        wall = round(100*(wall / tot), 1)
+        tot_ft2 = tot / self.floor_area
+        fh = open(os.path.join(self.out_path, self.name, 'embodied_results.csv'), 'w')
+
+
+        fh.write('{}, {}, (%)\n'.format('slab', slab))
+        fh.write('{}, {}, (%)\n'.format('beams & columns', beam_col))
+        fh.write('{}, {}, (%)\n'.format('core', core))
+        fh.write('{}, {}, (%)\n'.format('windows', win))
+        fh.write('{}, {}, (%)\n'.format('shading', shd))
+        fh.write('{}, {}, (%)\n'.format('walls', wall))
+        fh.write('{}, {},  (kg CO2e)\n'.format('total', tot))
+        fh.write('{}, {},  (kg CO2e / ft2)\n'.format('total /ft2', tot_ft2))
+        fh.close()
 
     def write_monthly_operational(self):
 
