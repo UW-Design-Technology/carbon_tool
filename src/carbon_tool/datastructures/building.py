@@ -270,8 +270,11 @@ class Building(object):
         for zk in self.zone_surfaces:
             # fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
             pts = self.zone_faces[zk]['floor']
-            # pts.append(pts[0])
-            fa += area_polygon(pts)
+            pts.append(pts[0])
+            pl = rs.AddPolyline(pts)
+            area = rs.SurfaceArea(rs.AddPlanarSrf(pl))[0]
+            fa += area
+            # fa += area_polygon(pts)
         return fa
 
     def zone_areas(self):
@@ -279,11 +282,15 @@ class Building(object):
         tot = 0
         for zk in self.znames:
             pts = self.zone_faces[zk]['floor']
-            area = area_polygon(pts)
+            pts.append(pts[0])
+            pl = rs.AddPolyline(pts)
+            area = rs.SurfaceArea(rs.AddPlanarSrf(pl))[0]
+            # area = area_polygon(pts)
             tot += area
             string += '{:>12} = {:9.4f}\n'.format(zk, area)
         string += '{:>12} = {:9.4f}\n'.format('total', tot)
         return string
+    
     @property
     def balcony_area(self):
         ba = 0
