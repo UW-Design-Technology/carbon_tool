@@ -268,23 +268,39 @@ class Building(object):
     def floor_area(self):
         fa = 0
         for zk in self.zone_surfaces:
-            # fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
-            pts = self.zone_faces[zk]['floor']
-            pts.append(pts[0])
-            pl = rs.AddPolyline(pts)
-            area = rs.SurfaceArea(rs.AddPlanarSrf(pl))[0]
-            fa += area
+            fa += rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
+            # pts = self.zone_faces[zk]['floor']
+            # pts.append(pts[0])
+            # pl = rs.AddPolyline(pts)
+            # # print(pl)
+            # # print(rs.IsCurve(pl))
+            # srf = rs.AddPlanarSrf(pl)
+            # if len(srf) > 1:
+            #     srf = srf[0]
+
+            # # print(srf)
+            # # print(type(srf))
+            # # print(rs.IsSurface(srf))
+            # area = rs.SurfaceArea(srf)[0]
+            # fa += area
             # fa += area_polygon(pts)
+        print(fa)
         return fa
 
     def zone_areas(self):
         string = ''
         tot = 0
         for zk in self.znames:
-            pts = self.zone_faces[zk]['floor']
-            pts.append(pts[0])
-            pl = rs.AddPolyline(pts)
-            area = rs.SurfaceArea(rs.AddPlanarSrf(pl))[0]
+            # pts = self.zone_faces[zk]['floor']
+            # pts.append(pts[0])
+            # pl = rs.AddPolyline(pts)
+            # srf = rs.AddPlanarSrf(pl)
+            # if len(srf) > 1:
+            #     print(len(srf))
+            #     srf = srf[0]
+                
+            # area = rs.SurfaceArea(srf)[0]
+            area = rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
             # area = area_polygon(pts)
             tot += area
             string += '{:>12} = {:9.4f}\n'.format(zk, area)
