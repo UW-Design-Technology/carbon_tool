@@ -189,10 +189,16 @@ class Envelope(object):
 
         shade_area = 0
         for ok in self.shading:
+            print(ok)
             dh = self.shading[ok]['horizontal']['depth']
-            nh = self.shading[ok]['horizontal']['num'] + 1
+            nh = self.shading[ok]['horizontal']['num'] 
+            if nh > 0:
+                nh += 1
             dv = self.shading[ok]['vertical']['depth']
-            nv = self.shading[ok]['vertical']['num'] + 1
+            nv = self.shading[ok]['vertical']['num']
+            if nv > 0:
+                nv += 1
+            print(nh, nv)
             side = sides[ok[0]]
             if side:
                 numsec = round(side / 10., 0)
@@ -204,6 +210,8 @@ class Envelope(object):
                 horizontal_area = w_width * dh * nh * numsec
                 vertical_area =  w_height * dv * nv * numsec
                 shade_area += horizontal_area + vertical_area
+            print(shade_area)
+        print('')
         total_shading_area += shade_area
 
 
