@@ -165,6 +165,8 @@ class Envelope(object):
         win_sys = self.glazing_system
         if win_sys == 'double':
             glass_mat = 'Glass Double'
+        elif win_sys == 'single':
+            glass_mat = 'Glass Single'
         else:
             glass_mat = 'Glass Triple'
         # win_emb_ = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)

@@ -284,7 +284,7 @@ class Building(object):
             # area = rs.SurfaceArea(srf)[0]
             # fa += area
             # fa += area_polygon(pts)
-        print(fa)
+        # print(fa)
         return fa
 
     def zone_areas(self):
@@ -303,6 +303,7 @@ class Building(object):
             area = rs.SurfaceArea(self.zone_surfaces[zk]['floor'])[0]
             # area = area_polygon(pts)
             tot += area
+            print(zk, area)
             string += '{:>12} = {:9.4f}\n'.format(zk, area)
         string += '{:>12} = {:9.4f}\n'.format('total', tot)
         return string
