@@ -133,7 +133,7 @@ class Building(object):
                         'Miami': carbon_tool.MIAMI,
                         }
 
-        glazing_dict = {'double': .4, 'triple': .2}  #### Btu/h-ft2-F
+        glazing_dict = {'double': .4, 'triple': .2, 'single': .7}  #### Btu/h-ft2-F
 
 
         if not out_path:
