@@ -311,9 +311,11 @@ class Building(object):
     @property
     def balcony_area(self):
         ba = 0
-        for k in self.balcony_faces:
-            pts = self.balcony_faces[k]
-            ba += area_polygon(pts)
+        # for k in self.balcony_faces:
+        #     pts = self.balcony_faces[k]
+        #     ba += area_polygon(pts)
+        for bg in self.balconies:
+            ba += rs.SurfaceArea(bg)[0]
         return ba
 
     def compute_structure_embodied(self):
